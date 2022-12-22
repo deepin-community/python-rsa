@@ -1,0 +1,59 @@
+From: TANIGUCHI Takaki <takaki@debian.org>
+Date: Sun, 26 Sep 2021 15:10:27 +0900
+Subject: Fix test failure
+
+import from https://github.com/sybrenstuvel/python-rsa/pull/176 .
+---
+ rsa/pkcs1.py       | 7 ++++++-
+ tests/test_mypy.py | 8 ++++++--
+ 2 files changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/rsa/pkcs1.py b/rsa/pkcs1.py
+index 07cf85b..9adad90 100644
+--- a/rsa/pkcs1.py
++++ b/rsa/pkcs1.py
+@@ -34,6 +34,11 @@ from hmac import compare_digest
+ 
+ from . import common, transform, core, key
+ 
++if typing.TYPE_CHECKING:
++    HashType = hashlib._Hash
++else:
++    HashType = typing.Any
++
+ # ASN.1 codes that describe the hash algorithm used.
+ HASH_ASN1 = {
+     'MD5': b'\x30\x20\x30\x0c\x06\x08\x2a\x86\x48\x86\xf7\x0d\x02\x05\x05\x00\x04\x10',
+@@ -44,7 +49,7 @@ HASH_ASN1 = {
+     'SHA-512': b'\x30\x51\x30\x0d\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03\x05\x00\x04\x40',
+ }
+ 
+-HASH_METHODS = {
++HASH_METHODS: typing.Dict[str, typing.Callable[[], HashType]] = {
+     'MD5': hashlib.md5,
+     'SHA-1': hashlib.sha1,
+     'SHA-224': hashlib.sha224,
+diff --git a/tests/test_mypy.py b/tests/test_mypy.py
+index 8258e7e..b13cdcc 100644
+--- a/tests/test_mypy.py
++++ b/tests/test_mypy.py
+@@ -1,4 +1,5 @@
+ import pathlib
++import sys
+ import unittest
+ 
+ import mypy.api
+@@ -9,8 +10,11 @@ test_modules = ['rsa', 'tests']
+ class MypyRunnerTest(unittest.TestCase):
+     def test_run_mypy(self):
+         proj_root = pathlib.Path(__file__).parent.parent
+-        args = ['--incremental', '--ignore-missing-imports'] + [str(proj_root / dirname) for dirname
+-                                                                in test_modules]
++        args = [
++            '--incremental',
++            '--ignore-missing-imports',
++            f'--python-version={sys.version_info.major}.{sys.version_info.minor}'
++        ] + [str(proj_root / dirname) for dirname in test_modules]
+ 
+         result = mypy.api.run(args)
+ 
