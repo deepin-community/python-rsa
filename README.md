@@ -1,5 +1,4 @@
-Pure Python RSA implementation
-==============================
+# Pure Python RSA implementation
 
 [![PyPI](https://img.shields.io/pypi/v/rsa.svg)](https://pypi.org/project/rsa/)
 [![Build Status](https://travis-ci.org/sybrenstuvel/python-rsa.svg?branch=master)](https://travis-ci.org/sybrenstuvel/python-rsa)
@@ -23,32 +22,55 @@ or download it from the [Python Package Index](https://pypi.org/project/rsa/).
 The source code is maintained at [GitHub](https://github.com/sybrenstuvel/python-rsa/) and is
 licensed under the [Apache License, version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-Security
---------
+## Security
 
 Because of how Python internally stores numbers, it is very hard (if not impossible) to make a pure-Python program secure against timing attacks. This library is no exception, so use it with care. See https://securitypitfalls.wordpress.com/2018/08/03/constant-time-compare-in-python/ for more info.
 
+## Setup of Development Environment
 
-Major changes in 4.1
---------------------
+```
+python3 -m venv .venv
+. ./.venv/bin/activate
+pip install poetry
+poetry install
+```
 
-Version 4.0 was the last version to support Python 2 and 3.4. Version 4.1 is compatible with Python 3.5+ only.
+## Publishing a New Release
 
+Since this project is considered critical on the Python Package Index,
+two-factor authentication is required. For uploading packages to PyPi, an API
+key is required; username+password will not work.
 
-Major changes in 4.0
---------------------
+First, generate an API token at https://pypi.org/manage/account/token/. Then,
+use this token when publishing instead of your username and password.
 
-Version 3.4 was the last version in the 3.x range. Version 4.0 drops the following modules,
-as they are insecure:
+As username, use `__token__`.
+As password, use the token itself, including the `pypi-` prefix.
 
-- `rsa._version133`
-- `rsa._version200`
-- `rsa.bigfile`
-- `rsa.varblock`
+See https://pypi.org/help/#apitoken for help using API tokens to publish. This
+is what I have in `~/.pypirc`:
 
-Those modules were marked as deprecated in version 3.4.
+```
+[distutils]
+index-servers =
+    rsa
 
-Furthermore, in 4.0 the I/O functions is streamlined to always work with bytes on all
-supported versions of Python.
+# Use `twine upload -r rsa` to upload with this token.
+[rsa]
+  repository = https://upload.pypi.org/legacy/
+  username = __token__
+  password = pypi-token
+```
 
-Version 4.0 drops support for Python 2.6 and 3.3.
+```
+. ./.venv/bin/activate
+pip install twine
+
+poetry build
+twine check dist/rsa-4.9.tar.gz dist/rsa-4.9-*.whl
+twine upload -r rsa dist/rsa-4.9.tar.gz dist/rsa-4.9-*.whl
+```
+
+The `pip install twine` is necessary as Python-RSA requires Python >= 3.6, and
+Twine requires at least version 3.7. This means Poetry refuses to add it as
+dependency.
